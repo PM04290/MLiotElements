@@ -1,0 +1,22 @@
+{
+  "name": "MLiotElements",
+  "version": "1.0",
+  "keywords": "Arduino, Lora, IoT",
+  "description": "Elements toolbox for IOT modules",
+  "repository":
+  {
+    "type": "git",
+    "url": "https://github.com/PM04290/MLiotElements
+  },
+  "authors":
+  [
+    {
+        "name": "Matieres & lumiere",
+        "email": "contact@matieresetlumiere.fr",
+        "maintainer": true
+    }
+  ],
+  "frameworks": "arduino",
+  "platforms": ["atmelavr", "atmelsam", "ststm32", "espressif8266", "espressif32", "samd"],
+  "headers": "MLiotElements.h"
+}
