@@ -15,12 +15,15 @@ class Binary : public Element
       _pin = pin;
       _sendmode = sendmode;
       _callbackProcess = callback;
+	  /*
 	  if (sendmode == stateNormal)
 	  {
 		pinMode(_pin, INPUT);
 	  } else {
 		pinMode(_pin, INPUT_PULLUP);
-	  }
+	  }*/
+      pinMode(_pin, INPUT_PULLUP);
+	  
       // mandatory
 	  if (_sendmode == stateNormal || _sendmode == stateInverted)
       {

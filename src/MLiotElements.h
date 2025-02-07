@@ -41,6 +41,7 @@ DateTime rtc;
 #include <MLelement.hpp>
 #include "tools/kalman.hpp"
 #include "MLbinary.hpp"
+#include "MLpulse.hpp"
 #include "MLanalog.hpp"
 #include "MLbutton.hpp"
 #include "MLrelay.hpp"
