@@ -1,11 +1,4 @@
 //
-typedef enum {
-  stop = 0,
-  open = 2,
-  opening = 3,
-  closed = 4,
-  closing = 5,
-} stateMotor_t;
 
 const char* MotStateStop = "stop";
 const char* MotStateOpen = "open";
@@ -34,7 +27,14 @@ class Motor : public Element
       // mandatory
       _elementType = rl_element_t::E_COVER;
       _dataType = rl_data_t::D_TEXT;
-	  }
+	}
+	typedef enum {
+	  stop = 0,
+	  open = 2,
+	  opening = 3,
+	  closed = 4,
+	  closing = 5,
+	} stateMotor_t;
     const char* getText() override {
       switch ((stateMotor_t)_curValue) {
         case stateMotor_t::stop:
@@ -106,6 +106,21 @@ class Motor : public Element
     {
 	  _timeFW = _timeBW = seconds;
     }
+	void actionLimit()
+	{
+		digitalWrite(_pinFW, 0);
+		digitalWrite(_pinBW, 0);
+		if (_curValue == (int32_t)stateMotor_t::closing) {
+			_curValue = (int32_t)stateMotor_t::closed;
+		} else
+		if (_curValue == (int32_t)stateMotor_t::opening) {
+			_curValue = (int32_t)stateMotor_t::open;
+		} else
+		{
+			_curValue = (int32_t)stateMotor_t::stop;
+		}
+		_timeoutCommand = 0;
+	}
     void Process() override {
       // detect contact limit
       if (_limitFW && _limitFW->getBool() && digitalRead(_pinFW) ) {

@@ -39,9 +39,9 @@ class Regul : public Select
     {
       if (_curValue == 0)
       { // mode MANU
-        if (_action->getValue()) {
-          _action->setValue(0);
-        }
+        //if (_action->getValue()) {
+        //  _action->setValue(0);
+        //}
         return;
       }
       if (_curValue == 1)
@@ -49,8 +49,18 @@ class Regul : public Select
         if (_regulMode == Manu) return;
         bool relayOut = _action->getValue() > 0;
         if (_regulMode == ON_inner) {
-          // relay ON if measure between L and H
-          relayOut = _setPointL->getFloat() < _measure->getFloat() && _measure->getFloat() < _setPointH->getFloat();
+          if (_setPointL && _setPointH) {
+            // relay ON if measure between L and H
+            relayOut = _setPointL->getFloat() < _measure->getFloat() && _measure->getFloat() < _setPointH->getFloat();
+          } else
+          if (_setPointL) {
+            // relay ON if measure upper L
+            relayOut = _setPointL->getFloat() < _measure->getFloat();
+          } else
+          if (_setPointH) {
+            // relay ON if measure under H
+            relayOut = _measure->getFloat() < _setPointH->getFloat();
+          }
         }
         if (_regulMode == ON_outer) {
           // relay ON if measure below L and above H

@@ -29,7 +29,7 @@ class Analog : public Element
       if (_callbackText) {
         return ( _callbackText(_curValue) );
       }
-      return "?";
+      return Element::getText();
     }
     void Process() override {
       uint32_t ADCraw = 0;

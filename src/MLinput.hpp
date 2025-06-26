@@ -24,6 +24,7 @@ class Input : public Element
       _maxi = 255;
       _divider = 1;
 #endif
+
       // mandatory
       _elementType = rl_element_t::E_INPUTNUMBER;
       if (_divider == 1) {
@@ -51,7 +52,7 @@ class Input : public Element
         cnfn.mini = _mini;
         cnfn.maxi = _maxi;
         cnfn.step = 1;
-        RLcomm.publishConfig(hubid, uid, (rl_configs_t*)&cnfn, C_NUMS);
+        MLiotComm.publishConfig(hubid, uid, (rl_configs_t*)&cnfn, C_NUMS);
 	  }
 	}
 

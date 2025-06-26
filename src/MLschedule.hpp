@@ -39,7 +39,7 @@ class Schedule : public Select
     }
     void setDuration(int16_t newDuration)
     {
-      _durationRemain = max(24 * 60 - 5, newDuration); // 24h - 5min to protect covering
+      _durationRemain = max((int16_t)(24 * 60 - 5), newDuration); // 24h - 5min to protect covering
       DEBUG("Duration: "); DEBUGln(_durationRemain);
     }
     void setBinaryCondition(Binary* binary, bool valueRun)
@@ -111,7 +111,7 @@ class Schedule : public Select
           if (isDayToRun() && isTimeToRun())
           {
             _dtStart = DateTime(rtc.year(), rtc.month(), rtc.day(), _EltStartHour->getValue(), 0, 0);
-            DEBUG("Stat at "); DEBUGln(_dtStart.timestamp());
+            DEBUG("Start at "); DEBUGln(_dtStart.timestamp());
             uint16_t d = _durationRemain;
             if (_EltDuration)
             {

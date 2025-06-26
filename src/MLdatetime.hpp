@@ -1,6 +1,12 @@
 // based on RTClib
 #include "tools/timespan.h"
 
+typedef enum {
+  TIMESTAMP_FULL, //!< `YYYY-MM-DDThh:mm:ss`
+  TIMESTAMP_TIME, //!< `hh:mm:ss`
+  TIMESTAMP_DATE  //!< `YYYY-MM-DD`
+} timestampOpt;
+
 /** Constants */
 #define SECONDS_PER_DAY 86400L               ///< 60 * 60 * 24
 #define SECONDS_FROM_1970_TO_2000  946684800 ///< Unixtime for 2000-01-01 00:00:00, useful for initialization
@@ -371,11 +377,6 @@ bool operator>=(const DateTime &right) const {
     @return Timestamp string, e.g. "2020-04-16T18:34:56".
 */
 /**************************************************************************/
-enum timestampOpt {
-  TIMESTAMP_FULL, //!< `YYYY-MM-DDThh:mm:ss`
-  TIMESTAMP_TIME, //!< `hh:mm:ss`
-  TIMESTAMP_DATE  //!< `YYYY-MM-DD`
-};
 String timestamp(timestampOpt opt = TIMESTAMP_FULL) const {
   char buffer[25]; // large enough for any DateTime, including invalid ones
 

@@ -7,12 +7,14 @@ class Select : public Element
 		// mandatory
 		_elementType = rl_element_t::E_SELECT;
 		_dataType = rl_data_t::D_TEXT;
+		_optcount = 0;
+		_optelts = nullptr;
 	}
 	const char* getText() override {
 		if (_curValue < _optcount) {
 			return _optelts[_curValue];
 		}
-		return "?";
+		return Element::getText();
 	}
 	void setText(const char* newValue) override {
 		for (uint8_t i = 0; i < _optcount; i++) {
@@ -41,14 +43,14 @@ class Select : public Element
     void PublishConfigDedicated() override {
       if (_elementType == E_SELECT && _optelts) {
         rl_configText_t cnft;
-		uint8_t len;
+		unsigned int len;
 		for (uint8_t i = 0; i < _optcount; i++) {
 			memset(&cnft, 0, sizeof(cnft));
 			cnft.childID = _id;
 			cnft.index = i;
 			len = strlen(_optelts[i]);
 			strncpy(cnft.text, _optelts[i], min(len, sizeof(cnft.text)));
-			RLcomm.publishConfig(hubid, uid, (rl_configs_t*)&cnft, C_OPTS);
+			MLiotComm.publishConfig(hubid, uid, (rl_configs_t*)&cnft, C_OPTS);
 		}
       }
 	}

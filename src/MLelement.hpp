@@ -2,10 +2,11 @@
  * Module LoRa base elements
  * 
  */
+#pragma once
 
 #ifdef RL_CURRENT_VERSION
 rl_packets _packet;
-RadioLinkClass RLcomm;
+iotCommClass MLiotComm;
 uint8_t uid;
 uint8_t hubid;
 #endif
@@ -34,11 +35,18 @@ class Element
       } else {
         _curValue = -999999;
       }
-      _sentValue = -_curValue; // to force send at start
+      _sentValue = -_curValue-1; // to force send at start
+      _OnChange = nullptr;
     }
     uint8_t getID() {
       return _id;
     }
+	const __FlashStringHelper* getName() {
+		return _name;
+	}
+	rl_data_t getDataType() {
+		return _dataType;
+	}
     virtual int32_t getValue() {
       return _curValue;
     }
@@ -50,7 +58,7 @@ class Element
     }
     virtual const char* getText() {
       // must be overrided
-      return "?";
+      return String(_curValue).c_str();
     }
     virtual void setValue(int32_t newValue) {
       _curValue = newValue;
@@ -68,6 +76,9 @@ class Element
       // must be overrided
       DEBUGln(F("process not overrided"));
     }
+	void onChange(uint8_t (*callback)(int32_t)) {
+      _OnChange = callback;
+	}
 #ifdef RL_CURRENT_VERSION
     virtual void PublishConfigDedicated() {
     }
@@ -79,9 +90,9 @@ class Element
       cnfb.deviceType = (uint8_t)_elementType;
       cnfb.dataType = (uint8_t)_dataType;
       // config Name
-      uint8_t len = strlen_P(reinterpret_cast<const char*>(_name));
+      unsigned int len = strlen_P(reinterpret_cast<const char*>(_name));
       strncpy_P(cnfb.name, reinterpret_cast<const char*>(_name), min(len, sizeof(cnfb.name)));
-      RLcomm.publishConfig(hubid, uid, (rl_configs_t*)&cnfb, C_BASE);
+      MLiotComm.publishConfig(hubid, uid, (rl_configs_t*)&cnfb, C_BASE);
       // config Unit
       if (_unit && strlen_P(reinterpret_cast<const char*>(_unit))) {
         rl_configText_t cnft;
@@ -91,7 +102,7 @@ class Element
         if (len < sizeof(cnft.text)) {
           cnft.text[len] = 0;
         }
-        RLcomm.publishConfig(hubid, uid, (rl_configs_t*)&cnft, C_UNIT);
+        MLiotComm.publishConfig(hubid, uid, (rl_configs_t*)&cnft, C_UNIT);
       }
 	  //
 	  PublishConfigDedicated();
@@ -100,12 +111,14 @@ class Element
       cnfb.childID = _id;
       cnfb.deviceType = (uint8_t)_elementType;
       cnfb.dataType = (uint8_t)_dataType;
-      RLcomm.publishConfig(hubid, uid, (rl_configs_t*)&cnfb, C_END);
+      MLiotComm.publishConfig(hubid, uid, (rl_configs_t*)&cnfb, C_END);
     }
-    uint32_t Send() {
+    uint32_t Send(bool force = false) {
 	  uint8_t l;
 	  const char* text;
-      if ((abs(_sentValue - _curValue) > _delta) && _id)
+      bool haveChanged = abs(_sentValue - _curValue) > _delta;
+
+      if ((haveChanged || force) && _id)
       {
         _sentValue = _curValue;
         switch ((int)_elementType) {
@@ -130,6 +143,12 @@ class Element
             strncpy(_packet.current.data.text, text, l);
             publishPacket();
             break;
+          default:
+            //DEBUG(_name); DEBUG(" no send"); DEBUGln((int)_elementType);
+            break;
+        }
+        if (haveChanged && _OnChange) {
+            _OnChange(_curValue);
         }
         return _curValue;
       }
@@ -143,7 +162,7 @@ class Element
       _packet.current.senderID = uid;
       _packet.current.childID = _id;
       _packet.current.sensordataType = (_elementType << 3) + _dataType;
-      RLcomm.publishPaquet(&_packet);
+      MLiotComm.publishPaquet(&_packet);
     }
 #endif
     uint8_t _id;
@@ -156,65 +175,86 @@ class Element
     int16_t _delta;
     const __FlashStringHelper* _name;
     const __FlashStringHelper* _unit;
+    uint8_t (*_OnChange)(int32_t);
 };
 
-Element** _elementList;
-uint8_t _elementCount = 0;
-
-Element* ML_addElement(Element* newElement) {
-  _elementList = (Element**)realloc(_elementList, (_elementCount + 1) * sizeof(Element*));
-  if (_elementList == nullptr) {
-    return nullptr;
-  }
-  _elementList[_elementCount] = newElement;
-  _elementCount++;
-  return _elementList[_elementCount - 1];
-}
-void ML_ProcessElements() {
-  for (uint8_t i = 0; i < _elementCount; i++)
-  {
-    ((Element*)_elementList[i])->Process();
-  }
-}
-Element* ML_getElementByID(uint8_t id)
+class ManagerClass
 {
-  for (uint8_t i = 0; i < _elementCount; i++)
-  {
-    if (((Element*)_elementList[i])->getID() == id)
-      return ((Element*)_elementList[i]);
-  }
-  return nullptr;
-}
-#ifdef RL_CURRENT_VERSION
-void ML_SendElements() {
-  for (uint8_t i = 0; i < _elementCount; i++)
-  {
-    ((Element*)_elementList[i])->Send();
-  }
-}
-void ML_PublishConfigElements(const __FlashStringHelper* deviceName, const __FlashStringHelper* deviceModel) {
-  rl_configs_t cnf;
-  uint8_t len;
-  memset(&cnf, 0, sizeof(cnf));
-  cnf.base.childID = RL_ID_CONFIG; // for device config
-  cnf.base.deviceType = E_CUSTOM;
-  cnf.base.dataType = D_TEXT;
-  // config text contain Name
-  len = strlen_P(reinterpret_cast<const char*>(deviceName));
-  strncpy_P(cnf.base.name, reinterpret_cast<const char*>(deviceName), min(len, sizeof(cnf.base.name)));
-  RLcomm.publishConfig(hubid, uid, &cnf, C_BASE);
-  // config text contain Model
-  memset(&cnf.text.text, 0, sizeof(cnf.text.text));
-  len = strlen_P(reinterpret_cast<const char*>(deviceModel));//strlen(deviceModel);
-  strncpy_P(cnf.text.text, reinterpret_cast<const char*>(deviceModel), min(len, sizeof(cnf.text.text)));
-  RLcomm.publishConfig(hubid, uid, &cnf, C_OPTS);
-  // end of conf
-  cnf.text.text[0] = 0;
-  RLcomm.publishConfig(hubid, uid, &cnf, C_END);
-  //
-  for (uint8_t i = 0; i < _elementCount; i++)
-  {
-    ((Element*)_elementList[i])->publishConfig();
-  }
-}
+  public:
+    ManagerClass() {
+      _elementList = nullptr;
+      _elementCount = 0;
+    }
+    Element* addElement(Element* newElement) {
+      _elementList = (Element**)realloc(_elementList, (_elementCount + 1) * sizeof(Element*));
+      if (_elementList == nullptr) {
+        return nullptr;
+      }
+      _elementList[_elementCount] = newElement;
+      _elementCount++;
+      return _elementList[_elementCount - 1];
+    }
+    void processElements() {
+      for (uint8_t i = 0; i < _elementCount; i++)
+      {
+        ((Element*)_elementList[i])->Process();
+      }
+    }
+    Element* getElementByID(uint8_t id)
+    {
+      for (uint8_t i = 0; i < _elementCount; i++)
+      {
+        if (((Element*)_elementList[i])->getID() == id)
+          return ((Element*)_elementList[i]);
+      }
+      return nullptr;
+    }
+    Element* getElementByName(const char* name)
+    {
+      for (uint8_t i = 0; i < _elementCount; i++)
+      {
+        if (String(((Element*)_elementList[i])->getName()) == String(name))
+          return ((Element*)_elementList[i]);
+      }
+      return nullptr;
+    }
+    #ifdef RL_CURRENT_VERSION
+    void sendElements(bool force = false) {
+      for (uint8_t i = 0; i < _elementCount; i++)
+      {
+        ((Element*)_elementList[i])->Send(force);
+      }
+    }
+    void publishConfigElements(const __FlashStringHelper* deviceName, const __FlashStringHelper* deviceModel) {
+      rl_configs_t cnf;
+      unsigned int len;
+      memset(&cnf, 0, sizeof(cnf));
+      cnf.base.childID = RL_ID_CONFIG; // for device config
+      cnf.base.deviceType = E_CUSTOM;
+      cnf.base.dataType = D_TEXT;
+      // config text contain Name
+      len = strlen_P(reinterpret_cast<const char*>(deviceName));
+      strncpy_P(cnf.base.name, reinterpret_cast<const char*>(deviceName), min(len, sizeof(cnf.base.name)));
+      MLiotComm.publishConfig(hubid, uid, &cnf, C_BASE);
+      // config text contain Model
+      memset(&cnf.text.text, 0, sizeof(cnf.text.text));
+      len = strlen_P(reinterpret_cast<const char*>(deviceModel));//strlen(deviceModel);
+      strncpy_P(cnf.text.text, reinterpret_cast<const char*>(deviceModel), min(len, sizeof(cnf.text.text)));
+      MLiotComm.publishConfig(hubid, uid, &cnf, C_OPTS);
+      // end of conf
+      cnf.text.text[0] = 0;
+      MLiotComm.publishConfig(hubid, uid, &cnf, C_END);
+      //
+      for (uint8_t i = 0; i < _elementCount; i++)
+      {
+        ((Element*)_elementList[i])->publishConfig();
+      }
+    }
+  protected:
+    Element** _elementList;
+    uint8_t _elementCount;
+};
+
+ManagerClass deviceManager;
+
 #endif
