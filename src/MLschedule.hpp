@@ -39,8 +39,26 @@ class Schedule : public Select
     }
     void setDuration(int16_t newDuration)
     {
-      _durationRemain = max((int16_t)(24 * 60 - 5), newDuration); // 24h - 5min to protect covering
+      _durationRemain = min((int16_t)(24 * 60 - 5), newDuration); // 24h - 5min to protect covering
       DEBUG("Duration: "); DEBUGln(_durationRemain);
+      if (isActive())
+      {
+        setRunningTimes();
+      }
+    }
+    void rtcRefreshed()
+    {
+      if (isActive())
+      {
+        setRunningTimes();
+      }
+    }
+    TimeSpan getTimeRemaining()
+    {
+      if (_dtStop > rtc)
+        return _dtStop - rtc;
+      else
+        return TimeSpan(0);
     }
     void setBinaryCondition(Binary* binary, bool valueRun)
     {
@@ -110,15 +128,7 @@ class Schedule : public Select
         } else {
           if (isDayToRun() && isTimeToRun())
           {
-            _dtStart = DateTime(rtc.year(), rtc.month(), rtc.day(), _EltStartHour->getValue(), 0, 0);
-            DEBUG("Start at "); DEBUGln(_dtStart.timestamp());
-            uint16_t d = _durationRemain;
-            if (_EltDuration)
-            {
-              d = _EltDuration->getValue();
-            }
-            _dtStop = _dtStart.unixtime() + ((uint32_t)d * 60);
-            DEBUG("Stop at "); DEBUGln(_dtStop.timestamp());
+            setRunningTimes();
           }
         }
       }
@@ -150,6 +160,18 @@ class Schedule : public Select
       }
       DateTime timeToStop = timeToStart.unixtime() +  (d * 60);
       return (d > 0) && (timeToStart <= rtc) && (rtc < timeToStop);
+    }
+    void setRunningTimes()
+    {
+      _dtStart = DateTime(rtc.year(), rtc.month(), rtc.day(), _EltStartHour->getValue(), 0, 0);
+      DEBUG("Start at "); DEBUGln(_dtStart.timestamp());
+      uint16_t d = _durationRemain;
+      if (_EltDuration)
+      {
+        d = _EltDuration->getValue();
+      }
+      _dtStop = _dtStart.unixtime() + ((uint32_t)d * 60);
+      DEBUG("Stop at "); DEBUGln(_dtStop.timestamp());
     }
   private:
     Element* _EltAction;

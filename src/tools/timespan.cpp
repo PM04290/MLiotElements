@@ -51,3 +51,19 @@ TimeSpan TimeSpan::operator+(const TimeSpan &right) const {
 TimeSpan TimeSpan::operator-(const TimeSpan &right) const {
   return TimeSpan(_seconds - right._seconds);
 }
+
+String TimeSpan::timestamp(bool showDays, bool showSeconds) const {
+  char buffer[25];
+  if (showDays) {
+      if (showSeconds)
+        sprintf(buffer, "%d %02d:%02d:%02d", days(), hours(), minutes(), seconds());
+      else
+        sprintf(buffer, "%d %02d:%02d", days(), hours(), minutes());
+  } else {
+      if (showSeconds)
+        sprintf(buffer, "%dh %02dmn %02ds", (days()*24 + hours()), minutes(), seconds());
+      else
+        sprintf(buffer, "%02dh %02dmn", (days()*24 + hours()), minutes());
+  }
+  return String(buffer);
+}

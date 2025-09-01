@@ -25,6 +25,7 @@ class TimeSpan
     }
     TimeSpan operator+(const TimeSpan &right) const;
     TimeSpan operator-(const TimeSpan &right) const;
+    String timestamp(bool showDays = true, bool showSeconds = false) const;
   protected:
     int32_t _seconds; ///< Actual TimeSpan value is stored as seconds
 };

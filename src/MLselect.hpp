@@ -20,7 +20,7 @@ class Select : public Element
 		for (uint8_t i = 0; i < _optcount; i++) {
 			if (strcmp(newValue, _optelts[i]) == 0) {
 				setValue(i);
-				return;
+				break;
 			}
 		}
 		#ifdef EEPROM_h

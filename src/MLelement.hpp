@@ -58,7 +58,7 @@ class Element
     }
     virtual const char* getText() {
       // must be overrided
-      return String(_curValue).c_str();
+      return (const char*)String(_curValue).c_str();
     }
     virtual void setValue(int32_t newValue) {
       _curValue = newValue;
