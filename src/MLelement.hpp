@@ -28,7 +28,7 @@ class Element
       if (_eepadr != EEP_NONE) {
         // default value is BYTE
 #ifdef EEPROM_h
-        _curValue = EEPROM.read(_eepadr);
+        EEPROM.get(_eepadr, _curValue);
 #else
         _curValue = -999999;
 #endif
@@ -118,7 +118,7 @@ class Element
 	  const char* text;
       bool haveChanged = abs(_sentValue - _curValue) > _delta;
 
-      if ((haveChanged || force) && _id)
+      if (_id &&(haveChanged || force))
       {
         _sentValue = _curValue;
         switch ((int)_elementType) {
@@ -218,7 +218,7 @@ class ManagerClass
       }
       return nullptr;
     }
-    #ifdef RL_CURRENT_VERSION
+#ifdef RL_CURRENT_VERSION
     void sendElements(bool force = false) {
       for (uint8_t i = 0; i < _elementCount; i++)
       {
@@ -238,7 +238,7 @@ class ManagerClass
       MLiotComm.publishConfig(hubid, uid, &cnf, C_BASE);
       // config text contain Model
       memset(&cnf.text.text, 0, sizeof(cnf.text.text));
-      len = strlen_P(reinterpret_cast<const char*>(deviceModel));//strlen(deviceModel);
+      len = strlen_P(reinterpret_cast<const char*>(deviceModel));
       strncpy_P(cnf.text.text, reinterpret_cast<const char*>(deviceModel), min(len, sizeof(cnf.text.text)));
       MLiotComm.publishConfig(hubid, uid, &cnf, C_OPTS);
       // end of conf
@@ -250,6 +250,7 @@ class ManagerClass
         ((Element*)_elementList[i])->publishConfig();
       }
     }
+#endif
   protected:
     Element** _elementList;
     uint8_t _elementCount;
@@ -257,4 +258,3 @@ class ManagerClass
 
 ManagerClass deviceManager;
 
-#endif

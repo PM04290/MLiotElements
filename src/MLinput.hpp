@@ -1,5 +1,5 @@
 //
-typedef struct {
+typedef struct __attribute__((packed)) {
   int16_t minValue;
   int16_t maxValue;
   int16_t selValue;
@@ -38,6 +38,9 @@ class Input : public Element
 #ifdef EEPROM_h
       inputRecord ir = {_mini, _maxi, (int16_t)_curValue, _divider};
       EEPROM.put(_eepadr, ir);
+#ifdef ESP32
+      EEPROM.commit();
+#endif
 #endif
     }
     void Process() override {

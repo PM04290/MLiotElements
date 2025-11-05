@@ -10,7 +10,7 @@ typedef enum {
 class Regul : public Select
 {
   public:
-    Regul(uint8_t childID, int16_t EEPadr, Element* measure, Element*action, Input* setPointL, Input* setPointH, regulMode_t regulMode, const __FlashStringHelper* name)
+    Regul(uint8_t childID, int16_t EEPadr, Element* measure, Element* action, Input* setPointL, Input* setPointH, regulMode_t regulMode, const __FlashStringHelper* name)
       : Select(childID, EEPadr, name) {
       _measure = measure;
       _action = action;

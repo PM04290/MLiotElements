@@ -23,9 +23,12 @@ class Select : public Element
 				break;
 			}
 		}
-		#ifdef EEPROM_h
-		EEPROM.write(_eepadr, (uint8_t)_curValue);
-		#endif
+#ifdef EEPROM_h
+		EEPROM.put(_eepadr, _curValue);
+#ifdef ESP32
+		EEPROM.commit();
+#endif
+#endif
 	}
 	void addOption(const __FlashStringHelper* option) {
 		_optelts = (char**)realloc(_optelts, (_optcount + 1) * sizeof(char*));

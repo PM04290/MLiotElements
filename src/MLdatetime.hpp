@@ -52,12 +52,6 @@ static uint32_t time2ulong(uint16_t days, uint8_t h, uint8_t m, uint8_t s) {
   return ((days * 24UL + h) * 60 + m) * 60 + s;
 }
 
-static uint8_t bcd2bin(uint8_t val) {
-  return val - 6 * (val >> 4);
-}
-static uint8_t bin2bcd(uint8_t val) {
-  return val + 6 * (val / 10);
-}
 
 class DateTime {
 public:
@@ -398,6 +392,13 @@ String timestamp(timestampOpt opt = TIMESTAMP_FULL) const {
 }
 
 #ifdef HARDWARE_RTC
+static uint8_t bcd2bin(uint8_t val) {
+  return val - 6 * (val >> 4);
+}
+static uint8_t bin2bcd(uint8_t val) {
+  return val + 6 * (val / 10);
+}
+
 uint8_t isValidDS3231() {
   Wire.beginTransmission(DS3231_ADDRESS);
   return  (Wire.endTransmission() == 0);
